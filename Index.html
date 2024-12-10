@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase JSON Editor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+    pre, textarea {
+      background: #eee;
+      padding: 15px;
+      border-radius: 5px;
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 15px;
+      font-family: monospace;
+    }
+    button {
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <h1>Firebase JSON Editor</h1>
+
+  <div id="content">
+    <p class="loading">Daten werden geladen...</p>
+  </div>
+
+  <textarea id="editor" rows="15" disabled></textarea>
+  <button id="saveButton" disabled>Änderungen speichern</button>
+
+  <script>
+    // Firebase-Datenbank-URL
+    const databaseUrl = "https://talla-84f24-default-rtdb.firebaseio.com/.json";
+
+    // Elemente
+    const contentDiv = document.getElementById("content");
+    const editor = document.getElementById("editor");
+    const saveButton = document.getElementById("saveButton");
+
+    // Daten aus Firebase laden
+    async function fetchData() {
+      try {
+        const response = await fetch(databaseUrl);
+        if (!response.ok) throw new Error("Fehler beim Laden der Daten");
+        const data = await response.json();
+        displayData(data);
+      } catch (error) {
+        contentDiv.innerHTML = `<p>Fehler: ${error.message}</p>`;
+      }
+    }
+
+    // JSON anzeigen und im Editor einfügen
+    function displayData(data) {
+      contentDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+      editor.value = JSON.stringify(data, null, 2);
+      editor.disabled = false;
+      saveButton.disabled = false;
+    }
+
+    // Änderungen speichern
+    async function saveData() {
+      try {
+        const updatedData = JSON.parse(editor.value); // JSON parsen
+        const response = await fetch(databaseUrl, {
+          method: "PUT", // Komplette Datenbank überschreiben
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedData),
+        });
+
+        if (!response.ok) throw new Error("Fehler beim Speichern der Daten");
+        alert("Daten erfolgreich gespeichert!");
+        fetchData(); // Aktualisierte Daten neu laden
+      } catch (error) {
+        alert(`Fehler: ${error.message}`);
+      }
+    }
+
+    // Event-Listener für den Speichern-Button
+    saveButton.addEventListener("click", saveData);
+
+    // Daten laden
+    fetchData();
+  </script>
+</body>
+</html>
